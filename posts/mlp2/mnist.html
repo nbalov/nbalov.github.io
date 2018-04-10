@@ -1,0 +1,202 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Using the MNIST Database in Stata</title>
+
+  <link rel="stylesheet" href="../../fonts/Serif/cmun-serif.css" />
+  <link rel="stylesheet" href="../../fonts/Serif-Slanted/cmun-serif-slanted.css" />
+
+  <!--BOOTSTRAP-->
+  <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <link href="http://fonts.googleapis.com/css?family=Droid+Serif" rel="stylesheet" type="text/css">
+  <link href="http://fonts.googleapis.com/css?family=Droid+Sans" rel="stylesheet" type="text/css">
+  <link href="../../css/default.css" rel="stylesheet">
+  <link href="../../css/classes.css" rel="stylesheet">
+  <link href="../../css/inlineDisqussions.css" rel="stylesheet">
+  <link href="../../highlight/styles/github.css" rel="stylesheet">
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-98701592-1', 'auto');
+  ga('require', 'linkid', 'linkid.js');
+  ga('require', 'displayfeatures');
+  ga('send', 'pageview');
+  </script>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand active" href="../../index.html" style="font-size:20px;"><span class="glyphicon glyphicon-pencil"></span> Home</a>
+    </div><!-- navbar-header -->
+
+    <div class="navbar-collapse collapse">
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="../../about.html"><span class="glyphicon glyphicon-user"></span>  About</a></li>
+        <li><a href="../../contact.html"><span class="glyphicon glyphicon-envelope"></span>  Contact</a></li>
+      </ul>
+    </div><!-- navbar-collapse -->
+
+  </div><!-- container -->
+</nav>
+
+<div id="content">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-10">
+
+	<h1>Using the MNIST database in Stata</h1>
+        
+	<div class="info">
+	<p style="font-family:CMSS; font-size:100%">Posted on February 08, 2018</p>
+	</div>
+
+<p>Image recognition has been historically one of the major application area of 
+machine learning. Many advanced technologies today incorporate algorithms for 
+recognizing handwritten letters and digits. The task poses challenges beyond 
+the scope of standard statistical methodology due to the structure and volume of 
+image data, and the complexity of the hierarchical models that are required 
+to address it effectively.</p>
+
+<p>In this post  demonstrate an application of the <b>mlp2</b> command for classifying handwritten digits from the MNIST database, [<sup id="fnref:1"><a href="mlp2mnist.html#fn:1" rel="footnote">1</a></sup>].</p>
+
+<p>To load the training MNIST dataset in Stata type:</p>
+
+<pre>
+. <b>use http://www.stata.com/users/nbalov/datasets/mnist-train</b>
+</pre>
+
+See the <a href="../mlp2/mlp2mnist.html">this post</a> for dataset analysis.
+
+<h2 id="references">MNIST database</h2>
+
+<p>The MNIST database, which stands for Modified National Institute of Standards and Technology, 
+is a collection of images of handwritten numerals. It is a popular benchmark 
+dataset used for evaluation of image recognition systems. 
+A substantial list of existing statistical and machine learning classification 
+algorithms have been tested and evaluated on MNIST. 
+See <a href="http://yann.lecun.com/exdb/mnist">this site</a> for current benchmark 
+results and literature.</p>
+
+<p>I have converted the MNIST database into two Stata datasets, <i>mnist-train</i> 
+and <i>mnist-test</i>. The training dataset, <i>mnist-train</i>, contains 60,000 
+images. The test dataset, <i>mnist-test</i>, contains 10,000 images. 
+Each image has dimensions 28x28 with total of 784 pixels. 
+The image pixels are stacked horizontally and are represented by the variables 
+<b>v1</b> to <b>v784</b>.</p>
+
+<p>The original images are monochrome and are encoded using 1 byte per pixel. 
+In the Stata datasets, the images have been reformatted so that each pixel is 
+represented by a float number in the [0,1] range. The variable <b>y</b> is the 
+label variable with values from 0 to 9 corresponding to the digit 
+represented in the image. In Figure 2 you can see some examples from the 
+training dataset.</p>
+
+<p>Visualizing individual images is unfortunately a bit cumbersome for it requires 
+some manipulations with the dataset. I need to extract an individual record and 
+expand its pixel values in a new long-format dataset. Then I use 
+the <b>twoway contour</b> command with the <b>heatmap</b> option to draw it. 
+In Figure 3 I show the first record from the training dataset.</p>
+
+<pre>
+<b>program draw_test_digit
+	args ndigit
+
+	use mnist-test, clear
+
+	quietly drop y
+	quietly keep if _n==`ndigit'
+	quietly gen y = 1
+
+	quietly reshape long v, i(y) j(x)
+
+	quietly replace y = 28-floor((x-1)/28)
+	quietly replace x = x - 28*(28-y)
+
+	quietly twoway (contour v y x, crule(intensity) ecolor(black) ///
+	    clegend(off) heatmap),                                    ///
+	    yscale(off) xscale(off) legend(off)                       ///
+	    graphregion(margin(zero)) plotregion(margin(zero))        ///
+	    graphregion(color(white)) aspectratio(1) nodraw           ///
+	    name(d`ndigit', replace)
+
+end</b>
+</pre>
+
+<pre>
+. <b>draw_test_digit 116</b>
+. <b>draw_test_digit 152</b>
+. <b>draw_test_digit 246</b>
+. <b>draw_test_digit 322</b>
+. <b>graph combine d116 d152 d246 d322, rows(1) cols(4) xsize(8) ysize(2) imargin(zero)</b>
+</pre>
+
+<center>
+<figure>
+      <img src="img/digits10.gif" style="width: 50%" vspace="100">
+<figcaption>Figure 1: Records of handwritten digits from the MNIST database.</figcaption>  
+</figure> 
+</center><br>
+
+<center>
+<figure>
+      <img src="img/digit1.gif" style="width: 50%" vspace="100">
+<figcaption>Figure 2: The first observation in the training dataset is the digit 5.</figcaption>  
+</figure> 
+</center><br>
+
+<div class="footnotes"><ol>
+
+<h2 id="references">References</h2>
+
+<li class="footnote" id="fn:1">
+	<p>Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner (1998). Gradient-Based Learning Applied to Document Recognition. Proceedings of the IEEE, 86(11), 2278-2324. 
+	<a href="mlp2mnist.html#fnref:1" title="return to article">↩</a>
+	</p>
+</li>
+
+</ol></div>
+
+      </div><!--/col-md-10-collapse -->
+    </div><!--/row-collapse -->
+  </div><!--/container-collapse -->
+</div><!--/content-collapse -->
+
+<script src="../../js/jquery-3.3.1.min.js"></script>
+<script src="../../js/inlineDisqussions.js"></script>
+<script src="../../highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="../../js/footnotes.js"></script>
+
+<div id="footer">
+  <div class="container">
+    using <a href="http://getbootstrap.com/">Bootstrap</a>,
+    <a href="http://www.mathjax.org/">MathJax</a>,
+    <a href="http://highlightjs.org/">Highlight.js</a>,
+    and <a href="http://ignorethecode.net/blog/2010/04/20/footnotes/">Footnotes.js</a>.
+  </div>
+</div>
+
+</body>
+
+
+

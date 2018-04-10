@@ -1,0 +1,385 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Multilayer Perceptron in Stata</title>
+
+  <link rel="stylesheet" href="../../fonts/Serif/cmun-serif.css" />
+  <link rel="stylesheet" href="../../fonts/Serif-Slanted/cmun-serif-slanted.css" />
+
+  <!--BOOTSTRAP-->
+  <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <link href="http://fonts.googleapis.com/css?family=Droid+Serif" rel="stylesheet" type="text/css">
+  <link href="http://fonts.googleapis.com/css?family=Droid+Sans" rel="stylesheet" type="text/css">
+  <link href="../../css/default.css" rel="stylesheet">
+  <link href="../../highlight/styles/github.css" rel="stylesheet">
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-98701592-1', 'auto');
+  ga('require', 'linkid', 'linkid.js');
+  ga('require', 'displayfeatures');
+  ga('send', 'pageview');
+  </script>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand active" href="../../index.html" style="font-size:20px;"><span class="glyphicon glyphicon-pencil"></span> Home</a>
+    </div><!-- navbar-header -->
+
+    <div class="navbar-collapse collapse">
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="../../about.html"><span class="glyphicon glyphicon-user"></span>  About</a></li>
+        <li><a href="../../contact.html"><span class="glyphicon glyphicon-envelope"></span>  Contact</a></li>
+      </ul>
+    </div><!-- navbar-collapse -->
+
+  </div><!-- container -->
+</nav>
+
+<div id="content">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-10">
+
+	<h1>Multilayer perceptrons in Stata</h1>
+        
+	<div class="info">
+	<p style="font-family:CMSS; font-size:100%">Posted on February 08, 2018</p>
+	</div>
+
+<p>In this post I introduce an unofficial Stata command, <b>mlp2</b>, for specifying 
+and learning a certain class of neural networks - multilayer perceptrons with 
+2 hidden layers. Despite their simplicity they turn out to be effective in 
+solving many statistical and machine learning problems, as I hope to show in 
+other posts.</p>
+
+<p>The <b>mlp2</b> command can be installed by typing the following in Stata:</p>
+
+<div id="info">
+<p style="font-family:CMSS; font-size:100%">
+<b>. net install mlp2, from("http://www.stata.com/users/nbalov")</b>
+</p>
+</div>
+
+<p>To see the help file, type</p>
+<div id="info">
+<p style="font-family:CMSS; font-size:100%">
+<b>. help mlp2</b>
+</p>
+</div>
+
+The <b>mlp2</b> has 3 subcommands: <b>fit</b> - for training a model, 
+<b>predict</b> - for performing prediction on test or validation data using 
+already trained model, and <b>simulate</b> - for simulating new outcome. 
+These commands reflect the typical <b>fit-and-predict</b> approach of most 
+machine learning frameworks. 
+
+<h2 id="references">Model description</h2>
+
+<p>The perceptron is a computational model designed to be a simple representation of 
+the biological neuron, [<sup id="fnref:1"><a href="mlp2.html#fn:1" rel="footnote">1</a></sup>]. It takes \(p\) input variables 
+\(x_i\) and produces a single binary output \(y\), according to the 
+function \(y = f(b+\sum_{i=1}^p w_i x_i)\), where \(b\) is a bias term, 
+\(w_i\)'s are some weights, and \(f\) is the Heaviside step function. In machine 
+learning literature, \(f\) is known as activation function. 
+More concisely, \(f({\bf x}) = 1_{x^Tw+b > 0}\). This construction can be used for 
+solving dichotomous classification problems.</p>
+
+<center>
+<figure>
+      <img src="img/mlp2_graph.gif" style="width: 75%" vspace="100">
+<figcaption>Figure 1: Schematic of multilayer perceptron with 2 hidden layers.</figcaption>  
+</figure> 
+</center><br>
+
+<p>The inability of the original perceptron to resolve classes that are not 
+linearly separable let to the development of perceptrons with 
+2 or more layers, different activation functions and multiclass output support. 
+These multilayer models belong to the more general class of feed-forward 
+artificial networks.</p>
+
+<p>The <b>mlp2</b> command implements 3-level multilayer perceptron. Excluding the input, 
+the model has 2 hidden layers and an output layer. 
+It is formally defined by the following set of equations. 
+Let \(x_i\), \(i=1,\dots,p\) be the input variables, \(u_j\), \(j=1,\dots,m_1\) be the 
+variables of the first hidden layer, \(v_k\), \(k=1,\dots,m_2\) be variables of the 
+second layer, and \(y_l\), \(l=1,\dots,c\) be the output class variables, then</p>
+
+<p>
+\begin{align}
+\begin{split}
+u_j = ReLU(\alpha_{0j} + \sum_{i=1}^p \alpha_{ij} x_i),\textrm{ }j=1,\dots,m_1 \\ <br>
+v_k = ReLU(\beta_{0k} + \sum_{j=1}^{m_1} \beta_{jk} u_j),\textrm{ }k=1,\dots,m_2 \\ <br>
+z_l = \gamma_{0l} + \sum_{k=1}^{m_2} \gamma_{kl} v_k,\textrm{ }l=1,\dots,c \\ <br>
+y_l = f_l(z),\textrm{ }l=1,\dots,c 
+\end{split}
+\end{align}
+</p>
+
+<p>where \(ReLU\) is the rectified linear unit function, \(ReLU(x) = \max\{0, x\}\). 
+Ddue to its effectiveness in practice, \(ReLU\) became a preferred activation function 
+in feed-forward networks. The function \(f\) depends on the type of the outcome 
+\(y\).  <b>mlp2</b> supports 2 choices: <i>softmax</i> and <i>mse</i>.</p>
+
+<p>The <i>softmax</i> function is suitable for categorical outcome and has the form 
+\begin{align}
+\begin{split}
+f_l(z) = \frac{\exp(z_l)}{\sum_{q=1}^c \exp(z_q)},\textrm{ } l=1,\dots,c
+\end{split}
+\end{align}
+</p>
+
+<p>It is based on the multinomial logistic regression model. Given a training sample \(\{(x^s, y^s)\}_{s=1}^n\), the <i>softmax</i> loss value is given by 
+the negative log-likelihood of parameters \({z_l^s}\) with respect to the sample</p>
+
+<p>
+\begin{align}
+\begin{split}
+softmax: \sum_{s=1}^n \Bigl\{ \log\Bigl(\sum_{l=1}^c \exp(z_l^s)\Bigr) - z_{y^s}^s \Bigr\} / n
+\end{split}
+\end{align}
+The loss is an implicit function of all model parameters \(\alpha\), \(\beta\), and \(\gamma\). The total number of parameters in this case is \(m_1(p+1)+m_2(m_1+1)+c(m_2+1)\).
+</p>
+
+<p>The <i>mse</i> loss is suitable for continuous outcome. In this case 
+\(c=1\) and \(f\) is the identity function, i.e. \(y = z\).
+The <i>mse</i> loss has the form 
+\begin{align}
+\begin{split}
+mse: \sum_{s=1}^n (z^s - y^s )^2 / n
+\end{split}
+\end{align}
+</p>
+
+<p>The training involves finding a set of parameters that minimize the loss function. 
+Note that the loss function is non-convex in general and may not have 
+a global minimum. So we should look for a pragmatic solution - a set of optimal 
+parameters such that the model generalizes well to new data in terms of 
+prediction accuracy. 
+The mainstream method for learning multilayer perceptrons, and feed-forward 
+networks in general, is stochastic gradient descent and its derivatives. The 
+gradients are computed using the backpropagation algorithm, 
+[<sup id="fnref:2"><a href="mlp2.html#fn:2" rel="footnote">2</a></sup>].</p>
+
+<p>
+In Figure 1 I show an example of perceptron that can be specified using the <b>mlp2</b> command.
+It has 3 input variables, 2 hidden layers with 4 neurons each, and a 2-class 
+output, that is, the output layer implements logistic regression.
+</p>
+
+<h2 id="references">Command description</h2>
+
+<p>The <b>mlp2 fit</b> command is used for model specification and training. 
+You start by identifying the dependent and independent variables. 
+As a minimum you also need to specify the size of the hidden layers using the 
+<b>layer1()</b> and <b>layer2()</b> options. In rare cases when the default 
+choice of loss function is not what you want, you may change it using the 
+<b>loss()</b> option. The default choice for optimizer is <b>sgd</b>, a 
+stochastic gradient descent optimizer, which you can change with the 
+<b>optimizer()</b> option. 
+Then you may need to think about other optimization-specific options such as 
+learning rate <b>lrate()</b>, batch size <b>batch()</b>, maximum 
+number of optimization iterations <b>epochs()</b>, etc. Usually you need several 
+runs of <b>mlp2 fit</b> followed by some validation assessment in order to 
+find optimal optimization regime.</p>
+
+<p>The <b>mlp2 predict</b> command performs prediction and reports a performance 
+score.  You need to provide a stub for the prediction variables using the 
+<b>genvar()</b> option. You also have the option to specify a ground-truth variable 
+using <b>truelabel()</b>. If not supplied, the training outcome variable name is 
+used, if such variable exists in the current dataset.</p>
+
+<p>In case of categorical outcome, the <b>mlp2 predict</b> command creates as 
+many prediction variables as are the number of outcome classes and these 
+contain the prediction probabilities for each class. 
+The prediction accuracy is calculated by comparing the most probable predicted 
+class with the true class. In case of continuous outcome, 
+one prediction variable is created that holds predicted values in the original 
+scale of the outcome. The performance metrics is determined by the type of 
+the outcome: accuracy <b>acc</b>, for categorical outcome, and mean absolute 
+error <b>mae</b>, for continuous outcome.</p>
+
+<p>When prediction is performed on the sample used for training we have 
+in-sample prediction. In-sample prediction cannot be used for over-fitting 
+estimation and it is thus not useful for validation. A common strategy is to 
+divide the current dataset into 2 samples, one used for training and the other 
+for validation. This can be done using <b>if/in</b> statements.  
+You can also call <b>mlp2 predict</b> on a completely new dataset, if you believe 
+that the model you have trained is compatible with the new data. For the purpose, 
+you may need to supply a new set of independent variables, if they differ from 
+the original independent variable names used for training. Of course, 
+the provided independent and ground-truth variables must be compatible with 
+their training counterparts in order for the prediction to make sense.</p>
+
+<h2 id="references">Example</h2>
+
+<p>
+I show an application of <b>mlp2</b> using the Health Insurance dataset <i>sysdsn1</i> 
+available in Stata
+<pre>
+<b>. webuse sysdsn1</b>
+</pre>
+
+Lets say we want to model the <b>insure</b> binary outcome by the independent 
+variables <b>age</b>, <b>male</b>, <b>nonwhite</b>, and <b>site</b>.  
+Lets first look at these variables. 
+The summary shows that the <b>insure</b> variable has 28 missing values and 
+<b>age</b> has 1. The observations with missing values will be automatically 
+dropped during training. 
+<pre>
+<b>. summarize insure age male nonwhite site</b>
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      insure |        616    1.595779    .6225427          1          3
+         age |        643    44.41415    14.22441   18.11087   86.07254
+        male |        644    .2593168    .4386004          0          1
+    nonwhite |        644    .1956522    .3970103          0          1
+        site |        644    1.987578    .7964742          1          3
+</pre>
+</p>
+
+<p>Next, I call the <b>mlp2 fit</b> command to train a multilayer perceptron with 
+hidden layers having 100 neurons each.  All options, except the layer options,
+are left at their default values. 
+<pre>
+<b>. mlp2 fit insure age male nonwhite i.site, layer1(100) layer2(100)</b>
+(28 missing values generated)
+
+------------------------------------------------------------------------------
+Multilayer perceptron                              input variables =        4
+                                                   layer1 neurons  =      100
+                                                   layer2 neurons  =      100
+Loss: softmax                                      output levels   =        3
+
+Optimizer: sgd                                     batch size      =       50
+                                                   max epochs      =      100
+                                                   loss tolerance  =    .0001
+                                                   learning rate   =       .1
+
+Training ended:                                    epochs          =       56
+                                                   start loss      =  1.23665
+                                                   end loss        =  .820173
+------------------------------------------------------------------------------
+</pre>
+The output is broken into 3 parts. First is displayed model specific information 
+such as the number of input variables, the number of neurons in the hidden 
+layers, the number of output levels, and the applied loss function. 
+In the second block, we see the choice of optimizer with other optimization 
+specific information such as batch size, maximum number of epochs, learning rate, 
+etc.
+The third block is displayed after the optimization ends and shows the actual 
+number of epochs and the starting and ending loss values.
+</p>
+
+<p>
+We see that the <b>mlp2 fit</b> command performed 56 optimization steps and the 
+initial loss of 1.24 has been reduced to 0.82. However, the optimization loss 
+has itself is not very informative for the goodness of fit of the model.
+</p>
+
+<p>I can use the <b>mlp2 predict</b> command to perform in-sample prediction. 
+I specify the <b>genvar(pr)</b> option to supply a stub for the variables 
+that will hold the class predicted probabilities: <b>pr_Indemnity</b>, 
+<b>pr_Prepaid</b>, and <b>pr_Uninsure</b>. 
+I also indicate the true outcome variable, <b>insure</b>, in order to compare 
+and calculate the prediction performance, although this is not needed because 
+<b>insure</b> is the outcome variables used during training. 
+<pre>
+<b>. mlp2 predict, genvar(pr) truelabel(insure)</b>
+(28 missing values generated)
+
+Prediction accuracy: .5902439024390244
+</pre>
+The achieved in-sample accuracy is only 59% which does not seem terribly good, 
+but it is still much better than the 33% accuracy of a random choice prediction. 
+Keep in mind that <b>mlp2</b> is not expected to work well out of the box 
+and tweaking the model and optimization options is often necessary. 
+</p>
+
+<p>
+Lets inspect some of the predicted probabilities and the actual outcome
+<pre>
+<b>. list pr* insure in 1/10</b>
+
+     +--------------------------------------------+
+     | pr_Ind~y   pr_Pre~d   pr_Uni~e      insure |
+     |--------------------------------------------|
+  1. | .6729499    .299127   .0279232   Indemnity |
+  2. | .3853745   .5955154   .0191101     Prepaid |
+  3. | .5070527   .4075416   .0854058   Indemnity |
+  4. | .2121731   .7453947   .0424322     Prepaid |
+  5. |        .          .          .           . |
+     |--------------------------------------------|
+  6. | .4088286   .5706751   .0204963     Prepaid |
+  7. | .5355542   .4351238   .0293221     Prepaid |
+  8. |        .          .          .           . |
+  9. | .4998144   .3933753   .1068103    Uninsure |
+ 10. | .4626809   .4840307   .0532884     Prepaid |
+     +--------------------------------------------+
+</pre>
+As we see, except cases 5, 8, and 9, the true outcome is predicted with highest 
+probability. 
+Of course, in-sample prediction is not a good way to evaluate the model fit and we should use independent sample to do so. I shall illustrate this elsewhere.</p>
+
+<h2 id="references">More applications of <b>mlp2</b></h2>
+
+See the <a href="../mlp2mnist/mlp2mnist.html">this post</a> for an application of <b>mlp2</b> to image data.
+
+<h2 id="references">References</h2>
+
+<div class="footnotes"><ol>
+
+<li class="footnote" id="fn:1"><p>Frank Rosenblatt (1958). The Perceptron: A Probabilistic Model for Information Storage and Organization in the Brain. Cornell Aeronautical Laboratory, Psychological Review, 65(6), 386–408. <a href="mlp2.html#fnref:1" title="return to article">↩</a></p></li>
+
+<li class="footnote" id="fn:2"><p>David E. Rumelhart, Geoffrey E. Hinton, and Ronald J. Williams (1986). Learning representations by back-propagating errors. Nature, 323(6088), 533–536. <a href="mlp2.html#fnref:2" title="return to article">↩</a></p></li>
+
+</div></ol>
+
+      </div><!--/col-md-10-collapse -->
+    </div><!--/row-collapse -->
+  </div><!--/container-collapse -->
+</div><!--/content-collapse -->
+
+<script src="../../js/jquery-3.3.1.min.js"></script>
+<script src="../../js/inlineDisqussions.js"></script>
+<script src="../../highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="../../js/footnotes.js"></script>
+
+<div id="footer">
+  <div class="container">
+    using <a href="http://getbootstrap.com/">Bootstrap</a>,
+    <a href="http://www.mathjax.org/">MathJax</a>,
+    <a href="http://highlightjs.org/">Highlight.js</a>,
+    and <a href="http://ignorethecode.net/blog/2010/04/20/footnotes/">Footnotes.js</a>.
+  </div>
+</div>
+
+<noscript>Enable JavaScript for footnotes, Disqus comments, and other cool stuff.</noscript>
+
+</body>
+
+
+

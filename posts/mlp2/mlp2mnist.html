@@ -1,0 +1,225 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>MNIST: Handwritten digit classification in Stata</title>
+
+  <link rel="stylesheet" href="../../fonts/Serif/cmun-serif.css" />
+  <link rel="stylesheet" href="../../fonts/Serif-Slanted/cmun-serif-slanted.css" />
+
+  <!--BOOTSTRAP-->
+  <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <link href="http://fonts.googleapis.com/css?family=Droid+Serif" rel="stylesheet" type="text/css">
+  <link href="http://fonts.googleapis.com/css?family=Droid+Sans" rel="stylesheet" type="text/css">
+  <link href="../../css/default.css" rel="stylesheet">
+  <link href="../../highlight/styles/github.css" rel="stylesheet">
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-98701592-1', 'auto');
+  ga('require', 'linkid', 'linkid.js');
+  ga('require', 'displayfeatures');
+  ga('send', 'pageview');
+  </script>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand active" href="../../index.html" style="font-size:20px;"><span class="glyphicon glyphicon-pencil"></span> Home</a>
+    </div><!-- navbar-header -->
+
+    <div class="navbar-collapse collapse">
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="../../about.html"><span class="glyphicon glyphicon-user"></span>  About</a></li>
+        <li><a href="../../contact.html"><span class="glyphicon glyphicon-envelope"></span>  Contact</a></li>
+      </ul>
+    </div><!-- navbar-collapse -->
+
+  </div><!-- container -->
+</nav>
+
+<div id="content">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-10">
+
+	<h1>MNIST: Handwritten digit classification in Stata</h1>
+        
+	<div class="info">
+	<p style="font-family:CMSS; font-size:100%">Posted on February 08, 2018</p>
+	</div>
+
+<p>Image recognition has been historically one of the major application area of 
+machine learning. Many advanced technologies today incorporate algorithms for 
+recognizing handwritten letters and digits. The task poses challenges beyond 
+the scope of standard statistical methodology due to the structure and volume of 
+image data, and the complexity of the hierarchical models that are required 
+to address it effectively.</p>
+
+<p>In this post  demonstrate an application of the <b>mlp2</b> command for classifying handwritten digits from the MNIST database, [<sup id="fnref:1"><a href="mlp2mnist.html#fn:1" rel="footnote">1</a></sup>].</p>
+
+<p>The <b>mlp2</b> command can be installed by typing the following in Stata:</p>
+
+<pre>. <b>net install mlp2, from("http://www.stata.com/users/nbalov")</b></pre>
+
+<p>To see the help file, type</p>
+<pre>. <b>help mlp2</b></pre>
+
+See the <a href="../mlp2/mnist.html">MNIST post</a> for dataset description and 
+the <a href="../mlp2/mlp2.html">mlp2 post</a> for model and command description.
+
+<h2>Model specification and training</h2>
+
+<pre>
+. <b>use http://www.stata.com/users/nbalov/datasets/mnist-train)</b>
+(Training MNIST: 28x28 images with stacked pixel values v* in [0,1] range)
+</pre>
+
+<pre>
+. <b>set seed 12345</b>
+. <b>mlp2 fit y v*, layer1(100) layer2(100)</b>
+
+------------------------------------------------------------------------------
+Multilayer perceptron                              input variables =      784
+                                                   layer1 neurons  =      100
+                                                   layer2 neurons  =      100
+                                                   output levels   =       10
+
+Optimizer: sgd                                     batch size      =       50
+                                                   max epochs      =      100
+                                                   loss tolerance  =  1.0e-04
+                                                   learning rate   =  1.0e-01
+
+Training ended:                                    epochs          =       21
+                                                   start loss      = 0.287316
+                                                   end loss        = 0.000616
+------------------------------------------------------------------------------
+</pre>
+
+<p>I then perform in-sample prediction using the <b>mlp2 predict</b> command to 
+evaluate the fit of the model. The option <b>genvar(ypred)</b> provides a stub 
+for new variables holding the predicted class probabilities. The command will 
+thus generate variables <b>ypred_0</b> to <b>ypred_9</b> of probability values 
+that sum to 1. The digit with maximum probability will be the predicted 
+one used for calculating the prediction accuracy. The accuracy itself is given 
+by the proportion of correctly predicted digits in the sample.</p>
+
+<pre>
+. <b>mlp2 predict, genvar(ypred)</b>
+
+Prediction accuracy: .9999833333333333
+</pre>
+
+<p>The reported in-sample prediction accuracy of about 1 shows that the model 
+explains the training data almost perfectly. This itself is not enough indication 
+for a good model fit. The model is so complex that it can easily overfit even large 
+training samples. The important problem of designing and training efficient 
+models without overfitting is, however, out of the scope of this blog.</p>
+
+<h2>Validating</h2>
+
+<pre>
+. <b>use http://www.stata.com/users/nbalov/datasets/mnist-test, clear</b>
+(Testing MNIST: 28x28 images with stacked pixel values v* in [0,1] range)
+</pre>
+
+<pre>
+. <b>mlp2 predict, genvar(ypred)</b>
+
+Prediction accuracy: .9742
+</pre>
+
+<p>The reported test prediction accuracy is about 0.97, so the test error is 
+less than 3%. This is a reassuring result, inline with the performance of 
+other similar classification models. See for example the 
+[3-layer NN, 500+150 hidden units] model listed in the classification table in  
+{http://yann.lecun.com/exdb/mnist}. The best performing classifiers have less 
+than 0.5 error but employ substantially more elaborate models than the 
+presented here.</p>
+
+<p>It is instructive to look at some of the test digits that are missclassified. 
+The indices of the missclassified records are saved in the matrix 
+<b>e(pred_err_ind)</b>. Some of them are 116, 152, 246, and 322. 
+As seen from the predicted class probability vector, the test image 116 depicts 
+the digit 4 but it is classified as 9.</p>
+
+<pre>
+. <b>list y ypred* in 116</b>
+
+     +--------------------------------------------------------------------+
+116. | y |  ypred_0 |  ypred_1 |  ypred_2 |  ypred_3 | ypred_4 |  ypred_5 |
+     | 4 | 1.22e-08 | 4.05e-08 | 2.46e-06 | 1.51e-07 | .121335 | 8.60e-07 |
+     |--------------------------------------------------------------------|
+     |     ypred_6    |     ypred_7    |     ypred_8     |    ypred_9     |
+     |    .0007171    |    5.11e-08    |    .0001033     |    .877841     |
+     +--------------------------------------------------------------------+
+</pre>
+
+<p>By looking at test image 116 (Figure 3), we indeed see a resemblance with the
+digit 9, so it is not surprising the algorithm has been fooled.
+Similarly you can check that test image 152 depicts the digit 9 but it is
+classified as 8, test image 246 depicts the digit 39 but it is classified as 6, and
+t est image 322 depicts the digit 2 but it is classified as 7. I show these test
+images in Figure 3.</p>
+
+<center>
+<figure>
+      <img src="img/wrong_pred4.gif" style="width: 50%" vspace="100">
+<figcaption>Figure 3: The incorrectly classified test images 115, 152, 246 and 322.</figcaption>  
+</figure> 
+</center><br>
+
+
+<h2 id="references">References</h2>
+
+<div class="footnotes"><ol>
+
+<li class="footnote" id="fn:1"><p>Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner (1998). Gradient-Based Learning Applied to Document Recognition. Proceedings of the IEEE, 86(11), 2278-2324. <a href="mlp2mnist.html#fnref:1" title="return to article">↩</a></p></li>
+
+</div></ol>
+
+      </div><!--/col-md-10-collapse -->
+    </div><!--/row-collapse -->
+  </div><!--/container-collapse -->
+</div><!--/content-collapse -->
+
+<script src="../../js/jquery-3.3.1.min.js"></script>
+<script src="../../js/inlineDisqussions.js"></script>
+<script src="../../highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="../../js/footnotes.js"></script>
+
+<div id="footer">
+  <div class="container">
+    using <a href="http://getbootstrap.com/">Bootstrap</a>,
+    <a href="http://www.mathjax.org/">MathJax</a>,
+    <a href="http://highlightjs.org/">Highlight.js</a>,
+    and <a href="http://ignorethecode.net/blog/2010/04/20/footnotes/">Footnotes.js</a>.
+  </div>
+</div>
+
+<noscript>Enable JavaScript for footnotes, Disqus comments, and other cool stuff.</noscript>
+  
+</body>
+
+
+
