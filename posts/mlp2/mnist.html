@@ -70,14 +70,16 @@
 	<p style="font-family:CMSS; font-size:100%">Posted on February 08, 2018</p>
 	</div>
 
-<p>Image recognition has been historically one of the major application area of 
+<p>Historically, image recognition has been one of the major application area of 
 machine learning. Many advanced technologies today incorporate algorithms for 
 recognizing handwritten letters and digits. The task poses challenges beyond 
 the scope of standard statistical methodology due to the structure and volume of 
-image data, and the complexity of the hierarchical models that are required 
-to address it effectively.</p>
+image data. To handle image data effectively, a complex hierarchical model is 
+needed to account for distant pixel correlations.</p>
 
-<p>In this post  demonstrate an application of the <b>mlp2</b> command for classifying handwritten digits from the MNIST database, [<sup id="fnref:1"><a href="mlp2mnist.html#fn:1" rel="footnote">1</a></sup>].</p>
+<p>In a subsequent post I will demonstrate an application of a multilayer 
+perceptron model in Stata for classifying handwritten digits from the MNIST database, [<sup id="fnref:1"><a href="mlp2mnist.html#fn:1" rel="footnote">1</a></sup>]. Here I 
+will introduce the database and describe some of its features.</p>
 
 <p>To load the training MNIST dataset in Stata type:</p>
 
@@ -85,7 +87,8 @@ to address it effectively.</p>
 . <b>use http://www.stata.com/users/nbalov/datasets/mnist-train</b>
 </pre>
 
-See the <a href="../mlp2/mlp2mnist.html">this post</a> for dataset analysis.
+See <a href="../mlp2/mlp2mnist.html">this post</a> for classification example 
+using the MNIST database.
 
 <h2 id="references">MNIST database</h2>
 
@@ -94,8 +97,7 @@ is a collection of images of handwritten numerals. It is a popular benchmark
 dataset used for evaluation of image recognition systems. 
 A substantial list of existing statistical and machine learning classification 
 algorithms have been tested and evaluated on MNIST. 
-See <a href="http://yann.lecun.com/exdb/mnist">this site</a> for current benchmark 
-results and literature.</p>
+Yann LeCun, Corinna Cortes, and Christopher Burges support <a href="http://yann.lecun.com/exdb/mnist">a website</a> that provides current benchmark results and literature.</p>
 
 <p>I have converted the MNIST database into two Stata datasets, <i>mnist-train</i> 
 and <i>mnist-test</i>. The training dataset, <i>mnist-train</i>, contains 60,000 
@@ -113,15 +115,16 @@ training dataset.</p>
 
 <p>Visualizing individual images is unfortunately a bit cumbersome for it requires 
 some manipulations with the dataset. I need to extract an individual record and 
-expand its pixel values in a new long-format dataset. Then I use 
-the <b>twoway contour</b> command with the <b>heatmap</b> option to draw it. 
-In Figure 3 I show the first record from the training dataset.</p>
+expand its pixel values in a long-format creating a new dataset. Then can I use 
+the <b>twoway contour</b> command with the <b>heatmap</b> option to draw it.
+The following program can be used to create a graph displaying the <b>ndigit</b> 
+record from the training dataset.
 
 <pre>
 <b>program draw_test_digit
 	args ndigit
 
-	use mnist-test, clear
+	use mnist-train, clear
 
 	quietly drop y
 	quietly keep if _n==`ndigit'
@@ -142,27 +145,42 @@ In Figure 3 I show the first record from the training dataset.</p>
 end</b>
 </pre>
 
+For example, I can display the first record from the training dataset, 
+seen in Figure 1, which happens to be the digit 5.</p>
 <pre>
-. <b>draw_test_digit 116</b>
-. <b>draw_test_digit 152</b>
-. <b>draw_test_digit 246</b>
-. <b>draw_test_digit 322</b>
-. <b>graph combine d116 d152 d246 d322, rows(1) cols(4) xsize(8) ysize(2) imargin(zero)</b>
+. <b>draw_digit 1</b>
+. <b>graph combine d1</b>
+</pre>
+
+I can also select a group of digits and display them in one combined graph, see 
+Figure 2.
+<pre>
+. <b>local list 2 22 4 15 17 29 31 50 10 54 12 48 33 84 30 80 56 98 34 88</b>
+. <b>local disp_list</b>
+. <b>foreach ndigit of local list {</b>
+	<b>draw_digit `ndigit'</b>
+	<b>local disp_list `disp_list' d`ndigit'</b>
+  <b>}</b>
+. <b>graph combine `disp_list'</b>
 </pre>
 
 <center>
 <figure>
-      <img src="img/digits10.gif" style="width: 50%" vspace="100">
-<figcaption>Figure 1: Records of handwritten digits from the MNIST database.</figcaption>  
+      <img src="img/digit1.gif" style="width: 50%" vspace="100">
+<figcaption>Figure 1: The first observation in the training dataset is the digit 5.</figcaption>  
 </figure> 
 </center><br>
 
 <center>
 <figure>
-      <img src="img/digit1.gif" style="width: 50%" vspace="100">
-<figcaption>Figure 2: The first observation in the training dataset is the digit 5.</figcaption>  
+      <img src="img/digits10.gif" style="width: 50%" vspace="100">
+<figcaption>Figure 2: 16 records of handwritten digits from the MNIST database.</figcaption>  
 </figure> 
 </center><br>
+
+Clearly, recognizing the numerals in these images is not a challenge to a human. 
+The question is, can we describe the human perception process as an algorithm 
+accessible to machines?
 
 <div class="footnotes"><ol>
 
