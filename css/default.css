@@ -3,8 +3,8 @@ body{
   position:relative;
   margin-bottom:0px;
   min-height:100%;
-  font-family:'CMS', 'Droid Sans', Helvetica, Arial, sans-serif;
-  font-size:18px;
+  font-family:'CMS',sans-serif, Arial, 'Droid Sans', Helvetica;
+  font-size:20px;
   letter-spacing:-0.02rem;
   line-height:1.5;
   text-align:left
