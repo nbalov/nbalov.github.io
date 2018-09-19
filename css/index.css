@@ -7,6 +7,11 @@ body{
 	background-size:cover
 }
 
+.jumbotron {
+	opacity: 0.8;
+	color: black;
+}
+
 .jumbotron h1 {
 	text-align: center;
 }
