@@ -3,6 +3,8 @@ canvas.width = document.querySelector(".container").clientWidth-36;
 if(canvas.width>1200) canvas.width=1200;
 canvas.height = canvas.width;
 
+document.body.style.cursor = "wait";
+
 var xaxis  = document.querySelector("#xaxis");
 var xleft  = document.querySelector("#xleft");
 var xright = document.querySelector("#xright");
@@ -55,7 +57,9 @@ LogisticSet.prototype.draw = function(x0, y0, scale) {
   if (this.scale * scale < 1e-4) {
     return;
   }
-  
+
+  document.body.style.cursor = "wait";
+
   this.x0 += XRANGE*this.scale*x0/this.width;
   this.y0 += YRANGE*this.scale*y0/this.height;
   this.scale *= scale;
@@ -94,6 +98,7 @@ LogisticSet.prototype.draw = function(x0, y0, scale) {
   divPrec.textContent = "Pixel resolution: " + 
       res.toExponential(2);
     
+    document.body.style.cursor = "auto";
 };
 
 LogisticSet.prototype.drawDefault = function() {

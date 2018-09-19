@@ -4,6 +4,8 @@ canvas.width = document.querySelector(".container").clientWidth-36;
 if(canvas.width>1200) canvas.width=1200;
 canvas.height = canvas.width;
 
+document.body.style.cursor = "wait";
+
 var XRANGE=3;
 var YRANGE=3;
 
@@ -80,7 +82,9 @@ MandelbrotSet.prototype.draw = function(x0, y0, scale) {
   if (this.scale * scale < 1e-12) {
     return;
   }
-  
+
+  document.body.style.cursor = "wait";
+
   this.x0 += XRANGE*this.scale*x0/this.width;
   this.y0 += YRANGE*this.scale*y0/this.height;
   this.scale *= scale;
@@ -115,7 +119,8 @@ MandelbrotSet.prototype.draw = function(x0, y0, scale) {
     divPrec.textContent = "Pixel resolution: " + 
       mscale.toExponential(2);
   }
-  
+
+  document.body.style.cursor = "auto"; 
 };
 
 MandelbrotSet.prototype.drawDefault = function() {
@@ -131,7 +136,7 @@ mset.drawDefault();
 function mouseup(event) {
   
   canvas.removeEventListener("mousemove", moved);
-  
+
   divRect.setAttribute("style", "");
   document.body.removeChild(divRect);
 
