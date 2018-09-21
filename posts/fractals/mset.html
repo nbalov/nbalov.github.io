@@ -87,8 +87,13 @@
 an impressive example of a complex structure arising from simple rules. It is named 
 after Benoit Mandelbrot who made significant contributions to fractal geometry 
 [<sup id="fnref:1"><a href="mset.html#fn:1" rel="footnote">1</a></sup>].
-The set represents the convergence set of the sequence \(z_{n+1} = z_n^2 + c\) as 
-a function of the complex number \(c\).
+The set represents the convergence set of the sequence 
+\begin{align}
+\begin{split}
+z_{n+1} = z_n^2 + c
+\end{split}
+\end{align}
+as a function of the complex number \(c\).
 </p>
 
 <p>
@@ -96,8 +101,13 @@ To zoom into the set click and drag to select a rectangle. At any point you can
 return to the initial view with right click of the mouse.
 </p>
 
+<div style="display:flex;flex-direction:column;">
 	<canvas style="margin:auto;"></canvas>
-	<div id="msetscale"></div>
+	<div id="xaxis" style="margin:auto;display:flex;flex-direction:row;justify-content:space-between;">
+		<div id="xleft" style="text-align:left;padding-top:8px;"></div>
+		<div id="msetscale" style="text-align:center;color:rgb(5,5,55);padding:8px;"></div>
+		<div id="xright" style="text-align:right;padding-top:8px;"></div>
+	</div>
 	<script src="../../js/mset.js"></script>
 
 <h2 id="references">References</h2>

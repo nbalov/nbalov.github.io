@@ -2,7 +2,7 @@
 
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <title>Logistic Map</title>
+  <title>Julia Set 4</title>
 
    <!--<link href="https://fonts.googleapis.com/css?family=Noto+Serif+JP" rel="stylesheet">-->
   <link rel="stylesheet" href="../../fonts/Serif/cmun-serif.css" />
@@ -81,45 +81,46 @@
 <div id="content">
   <div class="container">
 
-<h1>Logistic Map</h1>
+<h1>Julia Set 4</h1>
         
-<p>The <a href="https://en.wikipedia.org/wiki/Logistic_map">Logistic map</a> is 
-a second-order polynomial map with dynamics that ranges from deterministic to periodic to completely chaotic [<sup id="fnref:1"><a href="lmap.html#fn:1" rel="footnote">1</a></sup>].
-</p>
-
-<p>The map is given by the equation 
-\begin{align}
-\begin{split}
-x_{n+1} = r x_n (1-x_n), \ x_n\in[0,1]
-\end{split}
-\end{align}
-where parameter \(r\in[0,4]\). 
-For \(r\in[0,1)\), the map has a single stationary point \(0\) and \(r=1\) is a  so called bifurcation point after which a new attraction point arises. 
-For \(r\in(1,3)\), the attraction point is \(\frac{r-1}{r}\). For \(r\in(1,3)\), the map dynamics slowly transitions from periodic 
-to chaotic. For \(r=4\), the logistic map generates chaos - regardless of the initial 
-value \(x_0\), that is, \(x_n\) covers the interval \([0,1)\) uniformly.  
+<p>A <a href="https://en.wikipedia.org/wiki/Julia_set">Julia set</a> is  
+defined as the border set between convergent and non-convergent domains of 
+an iterative sequence. About this border small perturbations cause dramatic, 
+even chaotic changes in the dynamic of the sequence. It is named after 
+Gaston Julia who investigated the dynamics of some rational functions. 
+[<sup id="fnref:1"><a href="jset4.html#fn:1" rel="footnote">1</a></sup>].
 </p>
 
 <p>
-The following plot shows the bifurcation diagram of the logistic map for \(r\in[2.8,4]\).  To zoom into the diagram, click and drag to select a rectangle. At any point you can 
+The Julia set bellow represents the convergence set of the sequence 
+\begin{align}
+\begin{split}
+z_{n+1} = z_n^2 - 0.285
+\end{split}
+\end{align}
+</p>
+
+<p>
+To zoom into the set click and drag to select a rectangle. At any point you can 
 return to the initial view with right click of the mouse.
 </p>
 
 <div style="display:flex;flex-direction:column;">
-	<canvas style="margin:auto;"></canvas>
+	<canvas style="margin:auto;" maxiter="100" cr="0.285" ci="0" xrange="3.5" yrange="3.5">
+        </canvas>
 	<div id="xaxis" style="margin:auto;display:flex;flex-direction:row;justify-content:space-between;">
 		<div id="xleft" style="text-align:left;padding-top:8px;"></div>
 		<div id="msetscale" style="text-align:center;color:rgb(5,5,55);padding:8px;"></div>
 		<div id="xright" style="text-align:right;padding-top:8px;"></div>
 	</div>
-	<script src="../../js/lmap.js"></script>
+	<script src="../../js/julia.js"></script>
 </div>
 
 <h2 id="references">References</h2>
 
 <div class="footnotes"><ol>
 
-<li class="footnote" id="fn:1"><p>Robert May (1976). Simple mathematical models with very complicated dynamics. Nature, 261, 459–467. <a href="lmap.html#fnref:1" title="return to article">↩</a></p></li>
+<li class="footnote" id="fn:1"><p>Gaston Julia (1918). Mémoire sur l'iteration des fonctions rationnelles. Journal de Mathématiques Pures et Appliquées, 8, 47–245. <a href="jset4.html#fnref:1" title="return to article">↩</a></p></li>
 
   </div><!--/container-collapse -->
 </div><!--/content-collapse -->

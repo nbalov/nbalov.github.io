@@ -1,13 +1,15 @@
 
 var canvas = document.querySelector("canvas");
 canvas.width = document.querySelector(".container").clientWidth-36;
-if(canvas.width>1200) canvas.width=1200;
+if(canvas.width>800) canvas.width=800;
 canvas.height = canvas.width;
 
 document.body.style.cursor = "wait";
 
-var XRANGE=3;
-var YRANGE=3;
+var xaxis  = document.querySelector("#xaxis");
+var xleft  = document.querySelector("#xleft");
+var xright = document.querySelector("#xright");
+xaxis.style.width = canvas.width + "px";
 
 var xdown   = 0;
 var xlength = 0;
@@ -23,6 +25,9 @@ function MandelbrotSet(canvas) {
 
   this.height = canvas.height;
   this.width  = canvas.width;
+
+  this.xrange=3;
+  this.yrange=3;
   
   this.step    = 1;
   this.maxIter = 100;
@@ -46,7 +51,6 @@ MandelbrotSet.prototype.load_palette = function() {
                                g.toString() + "," + 
                                b.toString() + ")");
   }
-  console.log(this.palette[0]);
 };
 
 MandelbrotSet.prototype.iterate2 = function(x, y, x0, y0, k, n) {
@@ -77,7 +81,7 @@ MandelbrotSet.prototype.iterate4 = function(x, y, x0, y0, k, n) {
 };
 
 MandelbrotSet.prototype.draw = function(x0, y0, scale) {
-  var i, j, k, x, y, col;
+  var i, j, k, x, y, col, res;
 
   if (this.scale * scale < 1e-12) {
     return;
@@ -85,14 +89,20 @@ MandelbrotSet.prototype.draw = function(x0, y0, scale) {
 
   document.body.style.cursor = "wait";
 
-  this.x0 += XRANGE*this.scale*x0/this.width;
-  this.y0 += YRANGE*this.scale*y0/this.height;
+  this.x0 += this.xrange*this.scale*x0/this.width;
+  this.y0 += this.yrange*this.scale*y0/this.height;
   this.scale *= scale;
+
+  res = Math.floor(this.x0 * 1e6)/1e6;
+  xleft.textContent = "[" + res.toString();
+  res = this.x0 + this.xrange*this.scale;
+  res = Math.floor(res * 1e6)/1e6;
+  xright.textContent = res.toString() + "]";
   
   for (i = 0; i < this.width; i += this.step) {
-    x = this.x0 + XRANGE*this.scale*i/this.width;
+    x = this.x0 + this.xrange*this.scale*i/this.width;
     for (j = 0; j < this.height; j += this.step) {  
-      y = this.y0 + this.scale*YRANGE*j/this.height;
+      y = this.y0 + this.scale*this.yrange*j/this.height;
       k = this.iterate2(0, 0, x, y, 0, this.maxIter);
       if (k > 0) {
         col = k - 1;
@@ -104,20 +114,20 @@ MandelbrotSet.prototype.draw = function(x0, y0, scale) {
       this.cx.fillRect(i, j, this.step, this.step);
     }
   }
-  
-  var mscale = XRANGE*this.scale/this.width;
+
+  res = this.xrange*this.scale/this.width;  
   if (mset.scale < 1e-10) {
     divPrec.setAttribute("style", 
       "text-align:center;color:red; border: 2px solid white;padding:8px;");
     divPrec.textContent = "Pixel resolution: " + 
-      mscale.toExponential(2) + 
+      res.toExponential(2) + 
       " (precision loss)";
   }
   else {
     divPrec.setAttribute("style", 
-    "text-align:center;color:rgb(5,5,55);font-size:120%;padding:8px;");
+    "text-align:center;color:rgb(5,5,55);padding:8px;");
     divPrec.textContent = "Pixel resolution: " + 
-      mscale.toExponential(2);
+      res.toExponential(2);
   }
 
   document.body.style.cursor = "auto"; 
@@ -127,7 +137,7 @@ MandelbrotSet.prototype.drawDefault = function() {
     this.scale = 1;
     this.x0 = 0;
     this.y0 = 0;
-    this.draw(-(XRANGE-1)*canvas.width/XRANGE , -canvas.height/2, 1);
+    this.draw(-(this.xrange-1)*canvas.width/this.xrange , -canvas.height/2, 1);
 }
 
 var mset = new MandelbrotSet(canvas, 1);
