@@ -19,7 +19,7 @@ function JuliaSet(canvas) {
   this.width  = canvas.width;
   
   this.step    = 1;
-  this.maxIter = 40;
+  this.maxIter = parseFloat(canvas.getAttribute('maxiter'));
  
   this.scale = 1;
   this.x0 = 0;
@@ -39,9 +39,9 @@ JuliaSet.prototype.load_palette = function() {
   var k, r, g, b;
   this.palette = [];
   for (k = 0; k < this.maxIter; k++) {
-    r = 205 * Math.abs(Math.sin(2 * (k+0) / (this.maxIter)));
-    g = 205 * Math.abs(Math.sin(2 * (k+0) / (this.maxIter)));
-    b = 255 * Math.abs(Math.sin(2 * (k+5) / (this.maxIter)));
+    r = 205 * Math.abs(Math.sin(3 * (k+0) / (this.maxIter)));
+    g = 205 * Math.abs(Math.sin(3 * (k+0) / (this.maxIter)));
+    b = 255 * Math.abs(Math.sin(3 * (k+5) / (this.maxIter)));
     this.palette.push("rgb(" + r.toString() + "," + 
                                g.toString() + "," + 
                                b.toString() + ")");
