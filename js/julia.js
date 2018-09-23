@@ -32,19 +32,18 @@ function JuliaSet(canvas) {
   this.yrange = parseFloat(canvas.getAttribute('yrange'));
 
   this.palette = [];
-  this.load_palette();
 };
 
-JuliaSet.prototype.load_palette = function() {
+JuliaSet.prototype.load_palette = function(maxiter) {
   var k, r, g, b;
-  this.palette = [];
-  for (k = 0; k < this.maxIter; k++) {
-    r = 205 * Math.abs(Math.sin(3 * (k+0) / (this.maxIter)));
-    g = 205 * Math.abs(Math.sin(3 * (k+0) / (this.maxIter)));
-    b = 255 * Math.abs(Math.sin(3 * (k+5) / (this.maxIter)));
-    this.palette.push("rgb(" + r.toString() + "," + 
+  this.palette = new Array(Math.floor(maxiter));
+  for (k = 0; k < maxiter; k++) {
+    r = 205 * Math.abs(Math.sin(6.28 * (k+0) / maxiter));
+    g = 205 * Math.abs(Math.sin(6.28 * (k+0) / maxiter));
+    b = 255 * Math.abs(Math.sin(6.28 * (k+5) / maxiter));
+    this.palette[k] = "rgb(" + r.toString() + "," + 
                                g.toString() + "," + 
-                               b.toString() + ")");
+                               b.toString() + ")";
   }
 };
 
@@ -62,7 +61,7 @@ JuliaSet.prototype.iterate2 = function(x, y, x0, y0, k, n) {
 
 JuliaSet.prototype.draw = function(x0, y0, scale) {
  
- var i, j, k, x, y, col, res;
+ var i, j, k, x, y, col, res, maxiter;
 
   if (this.scale * scale < 1e-10) {
     return;
@@ -74,17 +73,22 @@ JuliaSet.prototype.draw = function(x0, y0, scale) {
   this.y0 += this.yrange*this.scale*y0/this.height;
   this.scale *= scale;
 
-  res = Math.floor(this.x0 * 1e6)/1e6;
+  var bits = Math.floor(Math.exp(Math.LN10*Math.floor(1 - Math.log(this.scale)/Math.LN10)));
+  res = Math.floor(this.x0 * bits)/bits;
   xleft.textContent = "[" + res.toString();
   res = this.x0 + this.xrange*this.scale;
-  res = Math.floor(res * 1e6)/1e6;
+  res = Math.floor(res * bits)/bits;
   xright.textContent = res.toString() + "]";
   
+  maxiter = Math.floor(this.maxIter - 10*Math.log(this.scale));
+  if (maxiter > 1000) maxiter = 1000;
+  this.load_palette(maxiter);
+
   for (i = 0; i < this.width; i += this.step) {
     x = this.x0 + this.xrange*this.scale*i/this.width;
     for (j = 0; j < this.height; j += this.step) {  
       y = this.y0 + this.scale*this.yrange*j/this.height;
-      k = this.iterate2(x, y, this.cr, this.ci, 0, this.maxIter);
+      k = this.iterate2(x, y, this.cr, this.ci, 0, maxiter);
       if (k > 0) {
         col = k - 1;
         this.cx.fillStyle = this.palette[col];
@@ -131,9 +135,8 @@ function mouseup(event) {
 
   var scale = Math.min(ylength / canvas.height, 
                        xlength / canvas.width);
-  if (scale < 1e-14) scale = 1e-14;
+  if (scale < 1e-8) scale = 1e-8;
 
-  mset.load_palette(scale);
   mset.draw(xdown, ydown, scale);
 }
 

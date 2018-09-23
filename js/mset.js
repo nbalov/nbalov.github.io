@@ -37,19 +37,18 @@ function MandelbrotSet(canvas) {
   this.y0 = 0;
   
   this.palette = [];
-  this.load_palette();
 };
 
-MandelbrotSet.prototype.load_palette = function() {
+MandelbrotSet.prototype.load_palette = function(maxiter) {
   var k, r, g, b;
-  this.palette = [];
-  for (k = 0; k < this.maxIter; k++) {
-    r = 205 * Math.abs(Math.sin(3 * k / this.maxIter));
-    g = 205 * Math.abs(Math.sin(3 * k / this.maxIter));
-    b = 255 * Math.abs(Math.sin(3 * (k+5) / this.maxIter));
-    this.palette.push("rgb(" + r.toString() + "," + 
+  this.palette = new Array(Math.floor(maxiter));
+  for (k = 0; k < maxiter; k++) {
+    r = 200 * Math.abs(Math.sin(6.28 * k / maxiter));
+    g = 200 * Math.abs(Math.sin(6.28 * k / maxiter));
+    b = 250 * Math.abs(Math.sin(6.28 * (k+5) / maxiter));
+    this.palette[k] = "rgb(" + r.toString() + "," + 
                                g.toString() + "," + 
-                               b.toString() + ")");
+                               b.toString() + ")";
   }
 };
 
@@ -81,7 +80,7 @@ MandelbrotSet.prototype.iterate4 = function(x, y, x0, y0, k, n) {
 };
 
 MandelbrotSet.prototype.draw = function(x0, y0, scale) {
-  var i, j, k, x, y, col, res;
+  var i, j, k, x, y, col, res, maxiter;
 
   if (this.scale * scale < 1e-12) {
     return;
@@ -93,17 +92,22 @@ MandelbrotSet.prototype.draw = function(x0, y0, scale) {
   this.y0 += this.yrange*this.scale*y0/this.height;
   this.scale *= scale;
 
-  res = Math.floor(this.x0 * 1e6)/1e6;
+  var bits = Math.floor(Math.exp(Math.LN10*Math.floor(1 - Math.log(this.scale)/Math.LN10)));
+  res = Math.floor(this.x0 * bits)/bits;
   xleft.textContent = "[" + res.toString();
   res = this.x0 + this.xrange*this.scale;
-  res = Math.floor(res * 1e6)/1e6;
+  res = Math.floor(res * bits)/bits;
   xright.textContent = res.toString() + "]";
   
+  maxiter = Math.floor(this.maxIter - 10*Math.log(this.scale));
+  if (maxiter > 1000) maxiter = 1000;
+  this.load_palette(maxiter);
+
   for (i = 0; i < this.width; i += this.step) {
     x = this.x0 + this.xrange*this.scale*i/this.width;
     for (j = 0; j < this.height; j += this.step) {  
       y = this.y0 + this.scale*this.yrange*j/this.height;
-      k = this.iterate2(0, 0, x, y, 0, this.maxIter);
+      k = this.iterate2(0, 0, x, y, 0, maxiter);
       if (k > 0) {
         col = k - 1;
         this.cx.fillStyle = this.palette[col];
