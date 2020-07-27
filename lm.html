@@ -179,7 +179,6 @@
 					var yvar  = mod.yvar;
 					var tableRef = document.getElementById("modelsummary");
 					var nodes = tableRef.tHead.children[0].children[0].childNodes;
-					console.log("add yvar", yvar, nodes, tableRef.tHead.children[0].children[0]);
 					if (nodes.length > 0) {
 						tableRef.tHead.children[0].children[0].replaceChild(
 								document.createTextNode(yvar), nodes[0]);
