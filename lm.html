@@ -276,13 +276,8 @@ x1,x2,y
 				deleteRows("datasummary");
 				deleteRows("modelsummary");
 				try {
-					csv = new llilliiili(input.value);
-					var ds = csv.lllllilil; 
-					ds.iiliillilil();
-					if (ds.illiliil < 1 || ds.llllllii < 1) {
-						return;
-					}
-					var mod = ds.iiliilliill(addRow, "datasummary");
+					var d = new llllliilli();
+					var mod = d.iiiilliiiil(input.value, addRow, "datasummary");
 					var x = mod.x;
 					var y = mod.y;
 					var xvars = mod.xvars;
@@ -297,16 +292,8 @@ x1,x2,y
 						tableRef.tHead.children[0].children[0].appendChild(
 								document.createTextNode(yvar));
 					}
-					var ols = new iiiiliiiil(x, y);
-					ols.lliilllll();
-					ols.iiiiilllil();
-					var b     = ols.illii;
-					var bse   = ols.lliilllil;
-					var tstat = ols.liiillllll;
-					var pval  = ols.iiiiilllii;
-					for (var j = 0; j < xvars.length; j++) {
-						addRow("modelsummary", [xvars[j], b[j], bse[j], tstat[j], pval[j]], [0,8,8,3,3]);
-					}
+					var m = new lliliilili();
+					m.iiiiillliii(x, xvars, y, addRow, "modelsummary");
 				}
 				catch (err) {
 					console.log(err.message);
